@@ -450,24 +450,19 @@ function draw(cv){
   const b=a*Math.sqrt(1-e*e);
   const c=a*e; // focal distance
 
-  // Layout: focus (M1) at ~40% from left, centered vertically
+  // Layout: focus (M1) centrado verticalmente
   const margin=isFS?0.40:0.46;
-  const ellCx=W*margin+c*0.5;
-  const ellCy=H*0.5;
-  const focX=ellCx-c*0.5; // left focus = M1
-  const focY=ellCy;
+  const focX=W*margin;   // foco direito = M1 (onde está a estrela)
+  const focY=H*0.5;
 
-  // perihelion (left of focus) and aphelion (right of focus)
+  // rAt(θ): θ=0 → r=a(1-e) = periélio (direita do foco)
+  //          θ=π → r=a(1+e) = afélio  (esquerda do foco)
   const rp=a*(1-e), ra=a*(1+e);
-  const perX=focX-rp, perY=focY;
-  const aphX=focX+ra, aphY=focY;
+  const perX=focX+rp, perY=focY;   // θ=0 → direita
+  const aphX=focX-ra, aphY=focY;   // θ=π → esquerda
 
-  // ── Ellipse path ──
-  ctx.save();
-  ctx.translate(ellCx,ellCy);
-  ctx.beginPath();ctx.ellipse(0,0,a,b,0,0,Math.PI*2);
-  ctx.strokeStyle='rgba(52,152,219,.18)';ctx.lineWidth=1.5;ctx.stroke();
-  ctx.restore();
+  const ellCx=focX-c;  // centro da elipse = foco direito - c
+  const ellCy=focY;
 
   // ── Semi-major axis line ──
   ctx.save();ctx.setLineDash([4,6]);
@@ -478,9 +473,11 @@ function draw(cv){
   // ── Trail ──
   if(trail.length>2){
     for(let i=1;i<trail.length;i++){
-      const alpha=(i/trail.length)*.55;
+      const t=i/trail.length;
+      const alpha=t*.75;
+      const width=t*2.2;
       ctx.beginPath();ctx.moveTo(trail[i-1].x,trail[i-1].y);ctx.lineTo(trail[i].x,trail[i].y);
-      ctx.strokeStyle=`rgba(52,152,219,${alpha})`;ctx.lineWidth=1.8;ctx.stroke();
+      ctx.strokeStyle=`rgba(52,152,219,${alpha})`;ctx.lineWidth=width;ctx.stroke();
     }
   }
 
@@ -509,12 +506,12 @@ function draw(cv){
   ctx.beginPath();ctx.arc(perX,perY,5,0,Math.PI*2);
   ctx.fillStyle='rgba(231,76,60,.9)';ctx.fill();
   ctx.strokeStyle='#e74c3c';ctx.lineWidth=1.5;ctx.stroke();
-  ctx.textAlign='right';
+  ctx.textAlign='left';
   ctx.font=`700 ${ls}px Outfit`;ctx.fillStyle='#e74c3c';
-  ctx.fillText('PERIÉLIO',perX-10,perY-10);
+  ctx.fillText('PERIÉLIO',perX+10,perY-10);
   ctx.font=`400 ${ls-1}px Space Mono`;ctx.fillStyle='rgba(231,76,60,.65)';
-  ctx.fillText(`r_p = ${rp.toFixed(0)} u.a.`,perX-10,perY+6);
-  ctx.fillText('v máx · F máx',perX-10,perY+19);
+  ctx.fillText(`r_p = ${rp.toFixed(0)} u.a.`,perX+10,perY+6);
+  ctx.fillText('v máx · F máx',perX+10,perY+19);
   ctx.restore();
 
   // ── AFÉLIO marker ──
@@ -522,16 +519,16 @@ function draw(cv){
   ctx.beginPath();ctx.arc(aphX,aphY,5,0,Math.PI*2);
   ctx.fillStyle='rgba(52,152,219,.9)';ctx.fill();
   ctx.strokeStyle='#3498db';ctx.lineWidth=1.5;ctx.stroke();
-  ctx.textAlign='left';
+  ctx.textAlign='right';
   ctx.font=`700 ${ls}px Outfit`;ctx.fillStyle='#3498db';
-  ctx.fillText('AFÉLIO',aphX+10,aphY-10);
+  ctx.fillText('AFÉLIO',aphX-10,aphY-10);
   ctx.font=`400 ${ls-1}px Space Mono`;ctx.fillStyle='rgba(52,152,219,.65)';
-  ctx.fillText(`r_a = ${ra.toFixed(0)} u.a.`,aphX+10,aphY+6);
-  ctx.fillText('v mín · F mín',aphX+10,aphY+19);
+  ctx.fillText(`r_a = ${ra.toFixed(0)} u.a.`,aphX-10,aphY+6);
+  ctx.fillText('v mín · F mín',aphX-10,aphY+19);
   ctx.restore();
 
   // ── Foco vazio ──
-  const foc2X=ellCx+c*.5;
+  const foc2X=ellCx-c; // foco esquerdo (vazio) = centro - c
   ctx.save();
   ctx.beginPath();ctx.arc(foc2X,focY,3,0,Math.PI*2);
   ctx.fillStyle='rgba(255,255,255,.13)';ctx.fill();
@@ -619,11 +616,10 @@ function loop(ts){
   const cv=getCV(),W=cv.width,H=cv.height;
   const a=semiA,e=ecc,c=a*e;
   const margin=isFS?.40:.46;
-  const ellCx=W*margin+c*.5;
-  const focX=ellCx-c*.5,focY=H*.5;
+  const focX=W*margin,focY=H*.5;
   const r2=rAt(trueAnomaly);
   trail.push({x:focX+r2*Math.cos(trueAnomaly),y:focY+r2*Math.sin(trueAnomaly)});
-  if(trail.length>380)trail.shift();
+  if(trail.length>1200)trail.shift();
 
   draw(cv);updateCards();
   rafId=requestAnimationFrame(loop);
