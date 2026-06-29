@@ -1,1 +1,2 @@
-# V-physe
+# vphys-jogo
+jogo de gravitação 
